@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { pathToFileURL } from 'node:url';
 import bcrypt from 'bcryptjs';
 import { createSeedData } from './data/seedData.js';
 import { COLLECTIONS } from '../models/index.js';
@@ -27,7 +28,7 @@ export async function seedDatabase() {
 
 // Only auto-run when this file is executed directly (`npm run seed`), not
 // when imported by routes/index.js for the /api/reset endpoint.
-const isMain = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
   connectDB()
     .then(seedDatabase)

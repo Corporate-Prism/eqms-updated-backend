@@ -19,6 +19,42 @@ function genUserId() {
 export function createAuthRouter(UserModel) {
   const router = Router();
 
+  /**
+   * @openapi
+   * /api/auth/signup:
+   *   post:
+   *     summary: Sign up a new user
+   *     description: Creates a new active user and returns a JWT plus sanitized user profile.
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [firstName, lastName, employeeId, password, role]
+   *             properties:
+   *               firstName:
+   *                 type: string
+   *               lastName:
+   *                 type: string
+   *               employeeId:
+   *                 type: string
+   *               mobile:
+   *                 type: string
+   *               password:
+   *                 type: string
+   *               role:
+   *                 type: string
+   *               designation:
+   *                 type: string
+   *     responses:
+   *       201:
+   *         description: User created successfully.
+   *       400:
+   *         description: Invalid signup payload.
+   *       409:
+   *         description: Employee ID already exists.
+   */
   router.post('/signup', async (req, res, next) => {
     try {
       const { firstName, lastName, employeeId, mobile, password, role, designation } = req.body || {};
@@ -59,6 +95,32 @@ export function createAuthRouter(UserModel) {
     }
   });
 
+  /**
+   * @openapi
+   * /api/auth/login:
+   *   post:
+   *     summary: Log in
+   *     description: Authenticates a user by employee ID and password and returns a signed JWT.
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [employeeId, password]
+   *             properties:
+   *               employeeId:
+   *                 type: string
+   *               password:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: Login successful.
+   *       400:
+   *         description: Missing credentials.
+   *       401:
+   *         description: Invalid employee ID or password.
+   */
   router.post('/login', async (req, res, next) => {
     try {
       const { employeeId, password } = req.body || {};
@@ -90,6 +152,20 @@ export function createAuthRouter(UserModel) {
     res.json({ ok: true });
   });
 
+  /**
+   * @openapi
+   * /api/auth/me:
+   *   get:
+   *     summary: Current user profile
+   *     description: Returns the currently authenticated user profile from the JWT.
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: User profile returned.
+   *       401:
+   *         description: Missing or invalid JWT.
+   */
   router.get('/me', requireAuth, async (req, res, next) => {
     try {
       const user = await UserModel.findById(req.user.id);

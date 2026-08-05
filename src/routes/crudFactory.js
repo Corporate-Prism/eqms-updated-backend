@@ -26,6 +26,27 @@ export function createCrudRouter(Model, collectionName, { hideFields = [] } = {}
   const router = Router();
   const shape = (doc) => toClientShape(doc, hideFields);
 
+  /**
+   * @openapi
+   * /api/{collection}:
+   *   get:
+   *     summary: List records for a collection
+   *     description: Returns every record from the requested collection, with Mongo-only fields stripped and `id` mapped back to the client shape.
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: collection
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Collection name such as users, plants, or qrmRecords.
+   *     responses:
+   *       200:
+   *         description: List of records returned successfully.
+   *       401:
+   *         description: Missing or invalid JWT.
+   */
   router.get('/', async (req, res, next) => {
     try {
       const docs = await Model.find({}).lean();
@@ -35,6 +56,33 @@ export function createCrudRouter(Model, collectionName, { hideFields = [] } = {}
     }
   });
 
+  /**
+   * @openapi
+   * /api/{collection}/{id}:
+   *   get:
+   *     summary: Fetch one record by id
+   *     description: Returns a single record from the requested collection.
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: collection
+   *         required: true
+   *         schema:
+   *           type: string
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Record returned successfully.
+   *       401:
+   *         description: Missing or invalid JWT.
+   *       404:
+   *         description: Record not found.
+   */
   router.get('/:id', async (req, res, next) => {
     try {
       const doc = await Model.findById(req.params.id).lean();
@@ -45,6 +93,32 @@ export function createCrudRouter(Model, collectionName, { hideFields = [] } = {}
     }
   });
 
+  /**
+   * @openapi
+   * /api/{collection}:
+   *   post:
+   *     summary: Create a record
+   *     description: Creates a new record in the requested collection.
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: collection
+   *         required: true
+   *         schema:
+   *           type: string
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *     responses:
+   *       201:
+   *         description: Record created successfully.
+   *       401:
+   *         description: Missing or invalid JWT.
+   */
   router.post('/', async (req, res, next) => {
     try {
       const payload = fromClientShape(req.body);
@@ -56,6 +130,39 @@ export function createCrudRouter(Model, collectionName, { hideFields = [] } = {}
     }
   });
 
+  /**
+   * @openapi
+   * /api/{collection}/{id}:
+   *   patch:
+   *     summary: Update a record
+   *     description: Partially updates one record in the requested collection.
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: collection
+   *         required: true
+   *         schema:
+   *           type: string
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *     responses:
+   *       200:
+   *         description: Record updated successfully.
+   *       401:
+   *         description: Missing or invalid JWT.
+   *       404:
+   *         description: Record not found.
+   */
   router.patch('/:id', async (req, res, next) => {
     try {
       const payload = fromClientShape(req.body);
@@ -67,6 +174,31 @@ export function createCrudRouter(Model, collectionName, { hideFields = [] } = {}
     }
   });
 
+  /**
+   * @openapi
+   * /api/{collection}/{id}:
+   *   delete:
+   *     summary: Delete a record
+   *     description: Deletes one record from the requested collection.
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: collection
+   *         required: true
+   *         schema:
+   *           type: string
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       204:
+   *         description: Record deleted successfully.
+   *       401:
+   *         description: Missing or invalid JWT.
+   */
   router.delete('/:id', async (req, res, next) => {
     try {
       await Model.findByIdAndDelete(req.params.id);
@@ -83,6 +215,38 @@ export function createCrudRouter(Model, collectionName, { hideFields = [] } = {}
   // work unchanged rather than rewriting ~25 detail screens to call
   // fine-grained endpoints. addRecord/updateRecord/removeRecord (used by the
   // Hierarchy admin screens) use the routes above instead.
+  /**
+   * @openapi
+   * /api/{collection}/replace-all:
+   *   put:
+   *     summary: Replace entire collection contents
+   *     description: Bulk-replaces all records in the requested collection with the provided array payload.
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: collection
+   *         required: true
+   *         schema:
+   *           type: string
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [records]
+   *             properties:
+   *               records:
+   *                 type: array
+   *                 items:
+   *                   type: object
+   *     responses:
+   *       200:
+   *         description: Collection replaced successfully.
+   *       401:
+   *         description: Missing or invalid JWT.
+   */
   router.put('/replace-all', async (req, res, next) => {
     try {
       const records = Array.isArray(req.body.records) ? req.body.records : [];

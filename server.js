@@ -4,8 +4,10 @@ dns.setServers(['8.8.8.8', '1.1.1.1']);
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import swaggerUi from 'swagger-ui-express';
 import { connectDB } from './src/config/db.js';
 import apiRouter from './src/routes/index.js';
+import { swaggerSpec } from './src/config/swagger.js';
 
 const PORT = process.env.PORT || 4000;
 const ORIGIN = process.env.CORS_ORIGIN || '*';
@@ -22,6 +24,8 @@ app.use(express.json({ limit: '2mb' }));
 app.use(morgan('dev'));
 
 app.get('/', (req, res) => res.json({ name: 'eqms-backend', status: 'ok' }));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get('/api-docs.json', (req, res) => res.json(swaggerSpec));
 app.use('/api', apiRouter);
 
 // Centralized error handler — every route above calls next(err) on failure
@@ -44,6 +48,7 @@ async function start() {
   // on boot. Requests that hit the DB will simply error until it connects.
   app.listen(PORT, () => {
     console.log(`[server] eqms-backend listening on http://localhost:${PORT}`);
+    console.log(`[server] swagger: http://localhost:${PORT}/api-docs`);
     console.log(`[server] try: curl http://localhost:${PORT}/api/health`);
   });
 

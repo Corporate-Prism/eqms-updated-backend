@@ -7,6 +7,16 @@ import authRouter from './auth.js';
 
 const router = Router();
 
+/**
+ * @openapi
+ * /api/health:
+ *   get:
+ *     summary: Health check
+ *     description: Returns API health status and the known collection names.
+ *     responses:
+ *       200:
+ *         description: Health check successful.
+ */
 router.get('/health', (req, res) => res.json({ ok: true, collections: COLLECTION_NAMES }));
 
 // Signup/login are necessarily public; everything else below this line
@@ -14,9 +24,20 @@ router.get('/health', (req, res) => res.json({ ok: true, collections: COLLECTION
 router.use('/auth', authRouter);
 router.use(requireAuth);
 
-// Single round trip for the frontend's initial load — returns every
-// collection keyed exactly like the frontend's `data` object. Users'
-// password hashes are stripped, same as the individual /api/users routes.
+/**
+ * @openapi
+ * /api/bootstrap:
+ *   get:
+ *     summary: Bootstrap all collections
+ *     description: Returns a full application bootstrap payload keyed by collection name for the frontend.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Bootstrap payload returned.
+ *       401:
+ *         description: Missing or invalid JWT.
+ */
 router.get('/bootstrap', async (req, res, next) => {
   try {
     const result = {};
@@ -33,9 +54,22 @@ router.get('/bootstrap', async (req, res, next) => {
   }
 });
 
-// Re-seeds every collection from the same seed data the frontend ships with
-// — backs the sidebar's "Reset sample data" action. Destructive, so it's
-// restricted to Master Admin rather than open to any logged-in user.
+/**
+ * @openapi
+ * /api/reset:
+ *   post:
+ *     summary: Reset sample data
+ *     description: Destructively reseeds all collections from the frontend's seed data. Restricted to Master Admin.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Reset completed successfully.
+ *       401:
+ *         description: Missing or invalid JWT.
+ *       403:
+ *         description: User is not allowed to reset sample data.
+ */
 router.post('/reset', requireRole('Master Admin'), async (req, res, next) => {
   try {
     const counts = await seedDatabase();

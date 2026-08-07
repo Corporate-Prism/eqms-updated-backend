@@ -1,9 +1,150 @@
 import { Router } from 'express';
-import { getAllUsers, getUserById, register, updateUser } from '../controllers/user.controller.js';
+import { getAllUsers, getUserById, login, logout, refresh, register, updateUser } from '../controllers/user.controller.js';
 import { validate } from '../middlewares/validate.js';
-import { getUsersQuerySchema, registerUserSchema, updateUserSchema, userIdParamSchema } from '../middlewares/schemas/user.schema.js';
+import { getUsersQuerySchema, loginUserSchema, logoutUserSchema, refreshTokenSchema, registerUserSchema, updateUserSchema, userIdParamSchema } from '../middlewares/schemas/user.schema.js';
 
 const router = Router();
+
+/**
+ * @openapi
+ * /users/login:
+ *   post:
+ *     summary: Login a user
+ *     tags:
+ *       - Users
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - identifier
+ *               - password
+ *             properties:
+ *               identifier:
+ *                 type: string
+ *                 example: jane.doe@company.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: SecureP@ss123
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       401:
+ *         description: Invalid credentials
+ *       403:
+ *         description: User account is not active
+ */
+router.post('/login', validate(loginUserSchema), login);
+
+/**
+ * @openapi
+ * /users/register:
+ *   post:
+ *     summary: Register a new eQMS user
+ *     tags:
+ *       - Users
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - firstName
+ *               - lastName
+ *               - employeeId
+ *               - email
+ *               - mobile
+ *               - role
+ *               - cityId
+ *               - plantId
+ *               - departmentId
+ *               - subDepartmentId
+ *               - password
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 example: Jane
+ *               lastName:
+ *                 type: string
+ *                 example: Doe
+ *               employeeId:
+ *                 type: string
+ *                 example: EMP-9042
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: jane.doe@company.com
+ *               mobile:
+ *                 type: string
+ *                 example: "+1234567890"
+ *               designationId:
+ *                 type: string
+ *                 example: 660f1b2c3d4e5f6a7b8c9d05
+ *               role:
+ *                 type: string
+ *                 enum: [Admin, QualityManager, Auditor, Employee]
+ *                 example: QualityManager
+ *               cityId:
+ *                 type: string
+ *                 example: 660f1b2c3d4e5f6a7b8c9d01
+ *               plantId:
+ *                 type: string
+ *                 example: 660f1b2c3d4e5f6a7b8c9d02
+ *               departmentId:
+ *                 type: string
+ *                 example: 660f1b2c3d4e5f6a7b8c9d03
+ *               subDepartmentId:
+ *                 type: string
+ *                 example: 660f1b2c3d4e5f6a7b8c9d04
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: SecureP@ss123
+ *               status:
+ *                 type: string
+ *                 enum: [active, inActive, suspended]
+ *                 default: active
+ *                 example: active
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: Validation error
+ *       409:
+ *         description: User with email or employeeId already exists
+ */
+router.post('/refresh', validate(refreshTokenSchema), refresh);
+
+/**
+ * @openapi
+ * /users/logout:
+ *   post:
+ *     summary: Logout a user
+ *     tags:
+ *       - Users
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *       400:
+ *         description: Refresh token is required
+ */
+router.post('/logout', validate(logoutUserSchema), logout);
 
 /**
  * @openapi

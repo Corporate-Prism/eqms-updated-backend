@@ -39,6 +39,25 @@ export const registerUserSchema = z.object({
   })
 });
 
+export const loginUserSchema = z.object({
+  body: z.object({
+    identifier: z.string().trim().min(2, 'Identifier is required'),
+    password: z.string().min(1, 'Password is required')
+  })
+});
+
+export const refreshTokenSchema = z.object({
+  body: z.object({
+    refreshToken: z.string().trim().min(1, 'Refresh token is required')
+  })
+});
+
+export const logoutUserSchema = z.object({
+  body: z.object({
+    refreshToken: z.string().trim().min(1, 'Refresh token is required')
+  })
+});
+
 export const getUsersQuerySchema = z.object({
   query: z.object({
     page: z.coerce.number().int().positive().default(1),

@@ -25,6 +25,16 @@ export const userRepository = {
 
   create: (userData) => User.create(userData),
 
+  findByCredentials: (identifier) => {
+    const normalizedIdentifier = identifier?.trim();
+    return User.findOne({
+      $or: [
+        { email: normalizedIdentifier.toLowerCase() },
+        { employeeId: normalizedIdentifier.toUpperCase() }
+      ]
+    }).select('+password').populate(POPULATE_FIELDS);
+  },
+
   findById: (id) => User.findById(id).populate(POPULATE_FIELDS),
 
   findAll: async ({ page, limit, search, role, status, designationId, cityId, plantId, departmentId, subDepartmentId, sortBy, sortOrder }) => {

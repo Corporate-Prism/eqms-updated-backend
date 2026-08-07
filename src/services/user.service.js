@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import { userRepository } from '../repositories/user.repository.js';
 import { designationRepository } from '../repositories/designation.repository.js';
 import { cityRepository } from '../repositories/city.repository.js';
@@ -9,6 +10,20 @@ const notFound = (label) => {
   const error = new Error(`${label} not found`);
   error.statusCode = 404;
   throw error;
+};
+
+const invalidatedRefreshTokens = new Set();
+const ACCESS_TOKEN_EXPIRES_IN = '15m';
+const REFRESH_TOKEN_EXPIRES_IN = '7d';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+
+const signTokens = (user) => {
+  const payload = { sub: user._id, role: user.role, email: user.email };
+
+  const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRES_IN });
+  const refreshToken = jwt.sign({ ...payload, type: 'refresh' }, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRES_IN });
+
+  return { accessToken, refreshToken };
 };
 
 const assertRefsExist = async ({ designationId, cityId, plantId, departmentId, subDepartmentId }) => {
@@ -23,6 +38,89 @@ const assertRefsExist = async ({ designationId, cityId, plantId, departmentId, s
 };
 
 export const userService = {
+  loginUser: async ({ identifier, password }) => {
+    const user = await userRepository.findByCredentials(identifier);
+
+    if (!user) {
+      const error = new Error('Invalid email/employee ID or password');
+      error.statusCode = 401;
+      throw error;
+    }
+
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      const error = new Error('Invalid email/employee ID or password');
+      error.statusCode = 401;
+      throw error;
+    }
+
+    if (user.status !== 'active') {
+      const error = new Error('User account is not active');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    const userObject = user.toObject();
+    delete userObject.password;
+
+    const { accessToken, refreshToken } = signTokens(user);
+
+    return {
+      user: userObject,
+      accessToken,
+      refreshToken
+    };
+  },
+
+  refreshToken: async ({ refreshToken }) => {
+    if (!refreshToken) {
+      const error = new Error('Refresh token is required');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (invalidatedRefreshTokens.has(refreshToken)) {
+      const error = new Error('Refresh token has been invalidated');
+      error.statusCode = 401;
+      throw error;
+    }
+
+    let payload;
+    try {
+      payload = jwt.verify(refreshToken, JWT_SECRET);
+    } catch (error) {
+      const err = new Error('Invalid or expired refresh token');
+      err.statusCode = 401;
+      throw err;
+    }
+
+    const user = await userRepository.findById(payload.sub);
+    if (!user || user.status !== 'active') {
+      const error = new Error('User not found or inactive');
+      error.statusCode = 401;
+      throw error;
+    }
+
+    invalidatedRefreshTokens.add(refreshToken);
+    const tokens = signTokens(user);
+
+    return {
+      message: 'Access token refreshed successfully',
+      ...tokens
+    };
+  },
+
+  logoutUser: async ({ refreshToken }) => {
+    if (!refreshToken) {
+      const error = new Error('Refresh token is required');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    invalidatedRefreshTokens.add(refreshToken);
+    return { message: 'Logged out successfully' };
+  },
+
   registerUser: async (userData) => {
     const existingUser = await userRepository.findByEmailOrEmployeeId(
       userData.email,

@@ -22,8 +22,11 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required: [name, cityId]
+ *             required: [code, name, cityId]
  *             properties:
+ *               code:
+ *                 type: string
+ *                 example: PLANT-001
  *               name:
  *                 type: string
  *                 example: Karachi Plant 1
@@ -103,6 +106,9 @@ router.get('/:id', validate(plantIdParamSchema), getPlantById);
  *             type: object
  *             minProperties: 1
  *             properties:
+ *               code:
+ *                 type: string
+ *                 example: PLANT-001
  *               name:
  *                 type: string
  *                 example: Karachi Plant 1 - Renamed

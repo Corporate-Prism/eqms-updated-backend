@@ -27,8 +27,11 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required: [name, cityId, plantId, departmentId]
+ *             required: [code, name, cityId, plantId, departmentId]
  *             properties:
+ *               code:
+ *                 type: string
+ *                 example: SUB-001
  *               name:
  *                 type: string
  *                 example: Incoming QA
@@ -121,6 +124,9 @@ router.get('/:id', validate(subDepartmentIdParamSchema), getSubDepartmentById);
  *             type: object
  *             minProperties: 1
  *             properties:
+ *               code:
+ *                 type: string
+ *                 example: SUB-001
  *               name:
  *                 type: string
  *                 example: Incoming QA - Renamed

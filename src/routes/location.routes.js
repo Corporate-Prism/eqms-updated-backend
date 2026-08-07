@@ -27,8 +27,11 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required: [name, cityId, plantId, departmentId, subDepartmentId]
+ *             required: [code, name, cityId, plantId, departmentId, subDepartmentId]
  *             properties:
+ *               code:
+ *                 type: string
+ *                 example: LOC-001
  *               name:
  *                 type: string
  *                 example: Raw Material Warehouse Bay A
@@ -127,6 +130,9 @@ router.get('/:id', validate(locationIdParamSchema), getLocationById);
  *             type: object
  *             minProperties: 1
  *             properties:
+ *               code:
+ *                 type: string
+ *                 example: LOC-001
  *               name:
  *                 type: string
  *                 example: Raw Material Warehouse Bay B

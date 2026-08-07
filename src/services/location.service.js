@@ -53,13 +53,21 @@ export const locationService = {
     // 2. Validate Entire Parental Hierarchy Chain
     await assertChainConsistency(subDepartmentId, departmentId, plantId, cityId);
 
-    // 3. Enforce Uniqueness within Sub-Department
-    const existingLocation = await locationRepository.findByNameInSubDepartment(
+    // 3. Enforce uniqueness within Sub-Department
+    const existingLocationByName = await locationRepository.findByNameInSubDepartment(
       name,
       subDepartmentId
     );
-    if (existingLocation) {
+    if (existingLocationByName) {
       throw createError('A location with this name already exists in this sub-department.', 409);
+    }
+
+    const existingLocationByCode = await locationRepository.findByCodeInSubDepartment(
+      locationData.code,
+      subDepartmentId
+    );
+    if (existingLocationByCode) {
+      throw createError('A location with this code already exists in this sub-department.', 409);
     }
 
     return locationRepository.create(locationData);
@@ -142,13 +150,25 @@ export const locationService = {
     // Check name collision within the parent sub-department
     if (updateData.name || updateData.subDepartmentId) {
       const nameToCheck = updateData.name || locationExists.name;
-      const conflict = await locationRepository.findByNameInSubDepartment(
+      const nameConflict = await locationRepository.findByNameInSubDepartment(
         nameToCheck,
         nextSubDepartmentId,
         locationId
       );
-      if (conflict) {
+      if (nameConflict) {
         throw createError('A location with this name already exists in this sub-department.', 409);
+      }
+    }
+
+    if (updateData.code || updateData.subDepartmentId) {
+      const codeToCheck = updateData.code || locationExists.code;
+      const codeConflict = await locationRepository.findByCodeInSubDepartment(
+        codeToCheck,
+        nextSubDepartmentId,
+        locationId
+      );
+      if (codeConflict) {
+        throw createError('A location with this code already exists in this sub-department.', 409);
       }
     }
 

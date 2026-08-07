@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const plantSchema = new mongoose.Schema(
   {
+    code: { type: String, required: true, trim: true, uppercase: true, unique: true, index: true },
     name: { type: String, required: true, trim: true },
     cityId: { type: mongoose.Schema.Types.ObjectId, ref: 'City', required: true }
   },

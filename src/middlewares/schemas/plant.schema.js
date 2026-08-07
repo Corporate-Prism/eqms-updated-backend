@@ -3,6 +3,7 @@ import { mongoObjectId } from './user.schema.js';
 
 export const createPlantSchema = z.object({
   body: z.object({
+    code: z.string().min(2, 'Plant code is required').trim().toUpperCase(),
     name: z.string().min(2, 'Plant name is required').trim(),
     cityId: mongoObjectId
   })
@@ -31,6 +32,7 @@ export const updatePlantSchema = z.object({
   }),
   body: z
     .object({
+      code: z.string().min(2, 'Plant code is required').trim().toUpperCase().optional(),
       name: z.string().min(2, 'Plant name is required').trim().optional(),
       cityId: mongoObjectId.optional()
     })

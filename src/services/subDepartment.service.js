@@ -44,12 +44,22 @@ export const subDepartmentService = {
 
     await assertChainConsistency(departmentId, plantId, cityId);
 
-    const existingSubDepartment = await subDepartmentRepository.findByNameInDepartment(
+    const existingSubDepartmentByName = await subDepartmentRepository.findByNameInDepartment(
       subDepartmentData.name,
       departmentId
     );
-    if (existingSubDepartment) {
+    if (existingSubDepartmentByName) {
       const error = new Error('A sub-department with this name already exists in this department.');
+      error.statusCode = 409;
+      throw error;
+    }
+
+    const existingSubDepartmentByCode = await subDepartmentRepository.findByCodeInDepartment(
+      subDepartmentData.code,
+      departmentId
+    );
+    if (existingSubDepartmentByCode) {
+      const error = new Error('A sub-department with this code already exists in this department.');
       error.statusCode = 409;
       throw error;
     }
@@ -122,13 +132,27 @@ export const subDepartmentService = {
 
     if (updateData.name || updateData.departmentId) {
       const nameToCheck = updateData.name || subDepartmentExists.name;
-      const conflict = await subDepartmentRepository.findByNameInDepartment(
+      const nameConflict = await subDepartmentRepository.findByNameInDepartment(
         nameToCheck,
         nextDepartmentId,
         subDepartmentId
       );
-      if (conflict) {
+      if (nameConflict) {
         const error = new Error('A sub-department with this name already exists in this department.');
+        error.statusCode = 409;
+        throw error;
+      }
+    }
+
+    if (updateData.code || updateData.departmentId) {
+      const codeToCheck = updateData.code || subDepartmentExists.code;
+      const codeConflict = await subDepartmentRepository.findByCodeInDepartment(
+        codeToCheck,
+        nextDepartmentId,
+        subDepartmentId
+      );
+      if (codeConflict) {
+        const error = new Error('A sub-department with this code already exists in this department.');
         error.statusCode = 409;
         throw error;
       }

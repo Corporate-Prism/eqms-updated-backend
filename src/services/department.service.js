@@ -29,12 +29,22 @@ export const departmentService = {
 
     await assertPlantBelongsToCity(departmentData.plantId, departmentData.cityId);
 
-    const existingDepartment = await departmentRepository.findByNameInPlant(
+    const existingDepartmentByName = await departmentRepository.findByNameInPlant(
       departmentData.name,
       departmentData.plantId
     );
-    if (existingDepartment) {
+    if (existingDepartmentByName) {
       const error = new Error('A department with this name already exists in this plant.');
+      error.statusCode = 409;
+      throw error;
+    }
+
+    const existingDepartmentByCode = await departmentRepository.findByCodeInPlant(
+      departmentData.code,
+      departmentData.plantId
+    );
+    if (existingDepartmentByCode) {
+      const error = new Error('A department with this code already exists in this plant.');
       error.statusCode = 409;
       throw error;
     }
@@ -105,9 +115,19 @@ export const departmentService = {
 
     if (updateData.name || updateData.plantId) {
       const nameToCheck = updateData.name || departmentExists.name;
-      const conflict = await departmentRepository.findByNameInPlant(nameToCheck, nextPlantId, departmentId);
-      if (conflict) {
+      const nameConflict = await departmentRepository.findByNameInPlant(nameToCheck, nextPlantId, departmentId);
+      if (nameConflict) {
         const error = new Error('A department with this name already exists in this plant.');
+        error.statusCode = 409;
+        throw error;
+      }
+    }
+
+    if (updateData.code || updateData.plantId) {
+      const codeToCheck = updateData.code || departmentExists.code;
+      const codeConflict = await departmentRepository.findByCodeInPlant(codeToCheck, nextPlantId, departmentId);
+      if (codeConflict) {
+        const error = new Error('A department with this code already exists in this plant.');
         error.statusCode = 409;
         throw error;
       }

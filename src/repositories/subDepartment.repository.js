@@ -7,6 +7,15 @@ const POPULATE_FIELDS = [
 ];
 
 export const subDepartmentRepository = {
+  findByCodeInDepartment: (code, departmentId, excludeId) => {
+    const filter = {
+      code: code.toUpperCase(),
+      departmentId
+    };
+    if (excludeId) filter._id = { $ne: excludeId };
+    return SubDepartment.findOne(filter);
+  },
+
   findByNameInDepartment: (name, departmentId, excludeId) => {
     const filter = {
       name: new RegExp(`^${name}$`, 'i'),

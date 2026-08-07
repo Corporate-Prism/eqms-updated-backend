@@ -1,6 +1,15 @@
 import { Plant } from '../models/plant.model.js';
 
 export const plantRepository = {
+  findByCodeInCity: (code, cityId, excludeId) => {
+    const filter = {
+      code: code.toUpperCase(),
+      cityId
+    };
+    if (excludeId) filter._id = { $ne: excludeId };
+    return Plant.findOne(filter);
+  },
+
   findByNameInCity: (name, cityId, excludeId) => {
     const filter = {
       name: new RegExp(`^${name}$`, 'i'),

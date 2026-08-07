@@ -6,6 +6,15 @@ const POPULATE_FIELDS = [
 ];
 
 export const departmentRepository = {
+  findByCodeInPlant: (code, plantId, excludeId) => {
+    const filter = {
+      code: code.toUpperCase(),
+      plantId
+    };
+    if (excludeId) filter._id = { $ne: excludeId };
+    return Department.findOne(filter);
+  },
+
   findByNameInPlant: (name, plantId, excludeId) => {
     const filter = {
       name: new RegExp(`^${name}$`, 'i'),

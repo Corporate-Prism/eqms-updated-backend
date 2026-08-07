@@ -10,9 +10,16 @@ export const plantService = {
       throw error;
     }
 
-    const existingPlant = await plantRepository.findByNameInCity(plantData.name, plantData.cityId);
-    if (existingPlant) {
+    const existingPlantByName = await plantRepository.findByNameInCity(plantData.name, plantData.cityId);
+    if (existingPlantByName) {
       const error = new Error('A plant with this name already exists in this city.');
+      error.statusCode = 409;
+      throw error;
+    }
+
+    const existingPlantByCode = await plantRepository.findByCodeInCity(plantData.code, plantData.cityId);
+    if (existingPlantByCode) {
+      const error = new Error('A plant with this code already exists in this city.');
       error.statusCode = 409;
       throw error;
     }
@@ -76,14 +83,27 @@ export const plantService = {
       }
     }
 
-    // if name or cityId is changing, re-check the compound uniqueness
+    const nextCityId = updateData.cityId || plantExists.cityId;
+
     if (updateData.name || updateData.cityId) {
       const nameToCheck = updateData.name || plantExists.name;
       const cityToCheck = updateData.cityId || plantExists.cityId;
 
-      const conflict = await plantRepository.findByNameInCity(nameToCheck, cityToCheck, plantId);
-      if (conflict) {
+      const nameConflict = await plantRepository.findByNameInCity(nameToCheck, cityToCheck, plantId);
+      if (nameConflict) {
         const error = new Error('A plant with this name already exists in this city.');
+        error.statusCode = 409;
+        throw error;
+      }
+    }
+
+    if (updateData.code || updateData.cityId) {
+      const codeToCheck = updateData.code || plantExists.code;
+      const cityToCheck = updateData.cityId || plantExists.cityId;
+
+      const codeConflict = await plantRepository.findByCodeInCity(codeToCheck, cityToCheck, plantId);
+      if (codeConflict) {
+        const error = new Error('A plant with this code already exists in this city.');
         error.statusCode = 409;
         throw error;
       }
